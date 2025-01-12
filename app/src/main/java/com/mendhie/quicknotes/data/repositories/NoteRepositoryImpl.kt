@@ -14,7 +14,7 @@ class NoteRepositoryImpl(
         return firebaseDataSource.createNote(note)
     }
 
-    override suspend fun getNotes(userId: String): Result<List<Note>> {
-        return firebaseDataSource.getNotes(userId)
+    override fun getNotes(userId: String, onResult: (Result<List<Note>>) -> Unit){
+        firebaseDataSource.getNotes(userId, onResult)
     }
 }

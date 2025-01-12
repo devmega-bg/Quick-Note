@@ -9,4 +9,8 @@ class UserRepositoryImpl(
     override suspend fun saveUserData(user: User): Result<Void> {
         return firebaseDataSource.saveUserData(user)
     }
+
+    override fun getUserData(userId: String, onResult: (Result<User>) -> Unit) {
+        firebaseDataSource.getUserData(userId, onResult)
+    }
 }

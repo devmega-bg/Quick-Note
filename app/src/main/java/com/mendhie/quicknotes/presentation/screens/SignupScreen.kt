@@ -1,7 +1,6 @@
 package com.mendhie.quicknotes.presentation.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -44,19 +44,27 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onSignupClick: () -> Unit,
-    onLoginError: (String) -> Unit
+fun SignupScreen(
+    onSignupSuccess: () -> Unit,
+    onSignupError: (String) -> Unit
 ){
     val context = LocalContext.current
 
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
+
+    val leadingIconAccount = @Composable {
+        Icon(
+            Icons.Default.Person,
+            contentDescription = "",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
 
     val leadingIconEmail = @Composable {
         Icon(
@@ -92,19 +100,30 @@ fun LoginScreen(
     ) {
         Spacer(modifier = Modifier.height(100.dp))
         Text(
-            text = "Welcome back! Glad to see you, Again!",
+            text = "Hello! Register to get started",
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = Color.Red
         )
 
         Spacer(modifier = Modifier.height(40.dp))
 
         OutlinedTextField(
+            value = username,
+            onValueChange = {username = it },
+            label = { Text("Username") },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = leadingIconAccount,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
             value = email,
             onValueChange = {email = it },
-            leadingIcon = leadingIconEmail,
             label = { Text("Email") },
+            leadingIcon = leadingIconEmail,
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
@@ -114,16 +133,16 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            leadingIcon = leadingIconPassword,
-            trailingIcon = trailingIcon,
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
+            trailingIcon = trailingIcon,
+            leadingIcon = leadingIconPassword,
             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
 
         Spacer(modifier = Modifier.height(6.dp))
-        
+
         Text(text = "Forgot password?", fontSize = 12.sp, modifier = Modifier.align(Alignment.End))
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -133,11 +152,17 @@ fun LoginScreen(
                 isLoading = true
 
                 coroutineScope.launch {
-                    val result = AuthModule.authenticationUseCases.signIn(email, password)
+                    val result = AuthModule.authenticationUseCases.signUp(email, password)
                     result.onSuccess {
                         isLoading = false
                         Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-                        onLoginSuccess()
+                        val user = AuthModule.authenticationUseCases.getCurrentUser()!!
+                        val createUserResult = AuthModule.userUseCases.saveUserData(
+                            User(user.uid, username, "", email)
+                        )
+                        createUserResult.onSuccess {
+                            onSignupSuccess()
+                        }
                     }
                     result.onFailure {
                         isLoading = false
@@ -145,26 +170,16 @@ fun LoginScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            enabled = email.isNotEmpty() && password.isNotEmpty() && !isLoading
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            enabled = email.isNotEmpty() && (password.length > 3) && (username.length > 2) && !isLoading
         ) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
             } else {
-                Text("Login")
+                Text("Signup")
             }
         }
-
-        Spacer(modifier = Modifier.height(86.dp))
-
-        Text(
-            text = "Don't have an account? Register Now",
-            fontSize = 14.sp,
-            color = Color.Blue,
-            modifier = Modifier.clickable {
-                onSignupClick()
-            }
-        )
-
     }
 }

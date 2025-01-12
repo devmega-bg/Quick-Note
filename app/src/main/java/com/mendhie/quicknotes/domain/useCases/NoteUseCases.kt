@@ -13,7 +13,7 @@ class NoteUseCases(private val noteRepository: NoteRepository) {
         return noteRepository.createNote(note)
     }
 
-    suspend fun getNotes(userId: String): Result<List<Note>> {
-        return noteRepository.getNotes(userId)
+    fun getNotes(userId: String, onResult: (Result<List<Note>>) -> Unit){
+        return noteRepository.getNotes(userId, onResult)
     }
 }

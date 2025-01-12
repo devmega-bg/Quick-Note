@@ -10,4 +10,8 @@ class UserUseCases(
         return userRepository.saveUserData(user)
     }
 
+    fun getUserData(userId: String, onResult: (Result<User>) -> Unit){
+        return userRepository.getUserData(userId, onResult)
+    }
+
 }

@@ -11,8 +11,8 @@ interface FirebaseDataSource {
     fun getCurrentUser(): FirebaseUser?
 
     suspend fun saveUserData(user: User): Result<Void>
-    suspend fun getUserData(userId: String): Result<User>
+    fun getUserData(userId: String, onResult: (Result<User>) -> Unit)
 
     suspend fun createNote(note: Note): Result<Note>
-    suspend fun getNotes(userId: String): Result<List<Note>>
+    fun getNotes(userId: String, onResult: (Result<List<Note>>) -> Unit)
 }

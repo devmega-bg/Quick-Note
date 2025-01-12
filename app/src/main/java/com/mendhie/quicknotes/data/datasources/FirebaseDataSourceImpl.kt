@@ -58,13 +58,15 @@ class FirebaseDataSourceImpl(
         }
     }
 
-    override suspend fun getUserData(userId: String): Result<User> {
-        return try {
-            val result = firestore.collection("users").document(userId).get().await()
-            Result.success(result.toObject(User::class.java)!!)
+    override fun getUserData(userId: String, onResult: (Result<User>) -> Unit){
+        try {
+            val result = firestore.collection("users").document(userId).get()
+            result.addOnSuccessListener { r->
+                onResult(Result.success(r.toObject(User::class.java)!!))
+            }
         }
         catch (e: Exception){
-            Result.failure(e)
+            onResult(Result.failure(e))
         }
     }
 
@@ -90,9 +92,31 @@ class FirebaseDataSourceImpl(
         }
     }
 
-    override suspend fun getNotes(userId: String): Result<List<Note>> {
-        TODO("Not yet implemented")
-    }
+    override fun getNotes(userId: String, onResult: (Result<List<Note>>) -> Unit){
+        try {
+            // Set up a real-time listener
+            firestore.collection("notes")
+                .whereEqualTo("userId", userId)
+                .addSnapshotListener { snapshot, exception ->
+                    if (exception != null) {
+                        // Handle errors
+                        onResult(Result.failure(exception))
+                        return@addSnapshotListener
+                    }
 
+                    if (snapshot != null) {
+                        // Map the snapshot documents to Note objects
+                        val notes = snapshot.documents.mapNotNull { document ->
+                            document.toObject(Note::class.java)
+                        }
+                        onResult(Result.success(notes)) // Return the updated list of notes
+                    }
+                }
+        }
+        catch (e: Exception){
+            onResult(Result.failure(e))
+
+        }
+    }
 
 }
